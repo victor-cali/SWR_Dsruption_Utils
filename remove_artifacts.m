@@ -1,0 +1,27 @@
+function [HPC,PFC]=remove_artifacts(HPC,PFC,fn,tr)
+TOT = abs(HPC) + abs(PFC); % Sum of amplitudes ==> To visually assess artifacts, as they will appear in every channel and add up
+
+L = length(HPC(:,1));
+% 
+% figure
+% plot(linspace(duration([0 0 0]),duration([0 0 L/fn]),L), TOT);
+
+% Artifacts
+% tr = 5670; %Visual threshold. Adjust it after viewing the signal.
+outliers = false(L,1);
+index = 1;
+while index<L
+    if TOT(index)>=tr
+        outliers((index-300):index+1999) = ones(2300,1); %When we detect an artifact, remove 300 datapoints prior (build up of artifact) and 2 sec of datapoints after. 
+        index = index+2000;
+    else
+        index = index +1;
+    end
+end
+
+
+%Filter out artifacts & replace with the mean of the channels' medians
+
+HPC(outliers,:) = mean(median(HPC)); 
+PFC(outliers,:) = mean(median(PFC));
+end
