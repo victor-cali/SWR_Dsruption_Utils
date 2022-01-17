@@ -46,7 +46,7 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
                 cd(G{j})
                 prepost=getfolder();
                 for i=1: length(prepost)
-                    field = strcat(G{j}(38:end),'__',prepost{i}(21:end));
+                    field = strcat('rat5__',G{j}(end-7:end),'__',prepost{i}(21:end));
                     cd(app.dataset_path)
                     cd(G{j})
                     cd(prepost{i}) 
@@ -87,8 +87,8 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
             tr(1)=mean(thresholds_perday_hpc);
             tr(2)=mean(thresholds_perday_cortex);
             
-            offset1= 5;
-            offset2= 0;
+            offset1= 5; %HPC
+            offset2= 0; %PFC
             
             app.D1 = round(tr(1) + offset1);
             app.D2 = round(tr(2) + offset2);
@@ -117,29 +117,30 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
             
             if strcmp(BR,'PFC')
                 max_length=cellfun(@length,swr_pfc(:,1));
-                N=max_length==max(max_length);
-                bouts = find(max_length);
-                app.BoutDropDown.Items = cellfun(@num2str,num2cell(bouts),'uni',false);
-                n=str2num(app.BoutDropDown.Value);
-                sn=swr_pfc{n,3};
             else
                 max_length=cellfun(@length,swr_hpc(:,1));
-                N=max_length==max(max_length);
-                bouts = find(max_length);
-                app.BoutDropDown.Items = cellfun(@num2str,num2cell(bouts),'uni',false);
-                n=str2num(app.BoutDropDown.Value);
+            end
+            
+            N = max_length==max(max_length);
+            bouts = find(max_length);
+            app.BoutDropDown.Items = cellfun(@num2str,num2cell(bouts),'uni',false);
+            n=str2num(app.BoutDropDown.Value);
+            
+            if strcmp(BR,'PFC')
+                sn=swr_pfc{n,3};
+            else
                 sn=swr_hpc{n,3};
             end
-            app.EventDropDown.Items = cellfun(@num2str,num2cell(1:length(sn)),'uni',false);
             
-            app.BoutMoreRipplesLabel.Text = strcat('Bout with more ripples: ', num2str(length(sn)));
+            app.EventDropDown.Items = cellfun(@num2str,num2cell(1:length(sn)),'uni',false);
+            app.BoutMoreRipplesLabel.Text = strcat('Best Bout: ', num2str(find(N)));
             app.TotalPFCripplesLabel.Text = strcat('Total PFC: ', num2str(sum(s_pfc)));
             app.TotalHPCripplesLabel.Text = strcat('Total HPC: ', num2str(sum(s_hpc)));
             
-            hpc=V_hpc{N};
-            pfc=V_pfc{N};
-            hpc2=signal2_hpc{N};
-            pfc2=signal2_pfc{N};
+            hpc=V_hpc{n};
+            pfc=V_pfc{n};
+            hpc2=signal2_hpc{n};
+            pfc2=signal2_pfc{n};
             
             if length(n)>1
                 'Multiple epochs with same number of events'
@@ -152,22 +153,23 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
             % PROPERTY
             event = str2num(app.EventDropDown.Value);
             
-            increment = 10;
-            plot(app.plot_UIAxes,(1:length(hpc))./app.fs, increment.*zscore(hpc)+100, 'Color', 'black')
+            bp_increment = 9;
+            raw_increment = 10;
+            plot(app.plot_UIAxes,(1:length(hpc))./app.fs, raw_increment.*zscore(hpc)+100, 'Color', 'black')
             hold(app.plot_UIAxes,'on')
-            plot(app.plot_UIAxes,(1:length(pfc))./app.fs, increment.*zscore(pfc)+150, 'Color', 'black')
-            plot(app.plot_UIAxes,(1:length(hpc2))./app.fs, increment.*zscore(hpc2)+220, 'Color', 'black')
-            plot(app.plot_UIAxes,(1:length(pfc2))./app.fs, increment.*zscore(pfc2)+290, 'Color', 'black')
+            plot(app.plot_UIAxes,(1:length(pfc))./app.fs, raw_increment.*zscore(pfc)+150, 'Color', 'black')
+            plot(app.plot_UIAxes,(1:length(hpc2))./app.fs, bp_increment.*zscore(hpc2)+220, 'Color', 'black')
+            plot(app.plot_UIAxes,(1:length(pfc2))./app.fs, bp_increment.*zscore(pfc2)+290, 'Color', 'black')
             
             if isempty(sn)
                 errordlg('No Events found','Error');
             end
             
             if ~ isempty(swr_hpc{n})
-                stem(app.plot_UIAxes,[swr_hpc{n,3}], ones(length([swr_hpc{n}]),1).*50, 'Color', 'blue') %(HPC)
+                stem(app.plot_UIAxes,[swr_hpc{n,3}], ones(length([swr_hpc{n}]),1).*360, 'Color', 'blue') %(HPC)
             end
             if ~ isempty(swr_pfc{n})
-                stem(app.plot_UIAxes,[swr_pfc{n,3}], ones(length([swr_pfc{n}]),1).*50, 'Color', 'red') %Seconds (Cortex)
+                stem(app.plot_UIAxes,[swr_pfc{n,3}], ones(length([swr_pfc{n}]),1).*360, 'Color', 'red') %Seconds (Cortex)
             end
             
             app.plot_UIAxes.XLim = [(sn(event)-win_len/app.fs), (sn(event)+win_len/app.fs)];
