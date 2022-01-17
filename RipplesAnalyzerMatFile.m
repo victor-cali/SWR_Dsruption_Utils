@@ -56,14 +56,14 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
                     HPC=load(HPC);
                     HPC=getfield(HPC,'HPC_ripple');
                     HPC=HPC.*(0.195);
-                    HPC = notch_filter(HPC, app.fs, power_line_noise);
+                    HPC = notch_filt(HPC, app.fs, power_line_noise);
                     % Cortical
                     Cortex=dir(strcat('*','PFC','*.mat'));
                     Cortex=Cortex.name;
                     Cortex=load(Cortex);
                     Cortex=getfield(Cortex,'PFC');
                     Cortex=Cortex.*(0.195);
-                    Cortex = notch_filter(Cortex, app.fs, power_line_noise);
+                    Cortex = notch_filt(Cortex, app.fs, power_line_noise);
                     %Load sleep scoring
                     A = dir('*states*.mat');
                     A={A.name};
@@ -197,6 +197,9 @@ classdef RipplesAnalyzerMatFile < matlab.apps.AppBase
             
             %Load RGS14 github
             addpath(genpath('D:\Dev\MATLAB\GenzelLab\LFP_RGS14'))
+            
+            %Load SWR_Dsruption_Utils 
+            addpath(genpath('D:\Dev\MATLAB\GenzelLab\SWR_Dsruption_Utils'))
             
             cd(app.dataset_path)
             
