@@ -14,7 +14,7 @@ while index<L
     if TOT(index)>=tr
         if 300>=index; low_lim = 1; else; low_lim = index-300; end
         if 1999>length(outliers); high_lim = length(outliers); else; high_lim = index+1999; end
-        outliers(low_lim:high_lim) = ones(2300,1); %When we detect an artifact, remove 300 datapoints prior (build up of artifact) and 2 sec of datapoints after. 
+        outliers(low_lim:high_lim) = ones(length(low_lim:high_lim),1); %When we detect an artifact, remove 300 datapoints prior (build up of artifact) and 2 sec of datapoints after. 
         index = index+2000;
     else
         index = index +1;
