@@ -5,25 +5,27 @@
 % %Load CorticoHippocampal
 % addpath(genpath('C:\Users\students\Documents\Swatantra\CorticoHippocampal'))
 
+% Path with the rat's data.
+ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4';
 %Load RGS14 github
 addpath(genpath('/home/adrian/Downloads/LFP_RGS14'))
 addpath('/home/adrian/Desktop/SWR_Dsruption_Utils')
 
 ss=3;
 fn=1000;
-%Rat 4
-cd('/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4')
+%Rat 5
+cd(ratpath)
 
 G=getfolder();
 
 for j=1:length(G) % Iterate across study days.
-cd('/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4')
+cd(ratpath)
 cd(G{j})
 
 prepost=getfolder();
      for i=1: length(prepost)
 
-    cd('/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4')
+    cd(ratpath)
     cd(G{j})
 
         cd(prepost{i})
@@ -34,6 +36,7 @@ prepost=getfolder();
     HPC=HPC.name;
     HPC=load(HPC);
     HPC=getfield(HPC,'HPC_ripple');
+    HPC=HPC.*(0.195);
 
 
     Cortex=dir(strcat('*','PFC','*.mat'));
@@ -93,13 +96,13 @@ xo
 All_events=[];
 All_str=[];
 for j=1:length(G) % Iterate across study days.
-cd('/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4')
+cd(ratpath)
 cd(G{j})
 
 prepost=getfolder();
      for i=1: length(prepost)
 
-    cd('/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4')
+    cd(ratpath)
     cd(G{j})
 
         cd(prepost{i})
@@ -110,6 +113,7 @@ prepost=getfolder();
     HPC=HPC.name;
     HPC=load(HPC);
     HPC=getfield(HPC,'HPC_ripple');
+    HPC=HPC.*(0.195);
 
 
     Cortex=dir(strcat('*','PFC','*.mat'));
@@ -161,6 +165,23 @@ si=[All_events]; %take all events.
 
 printing_image('Rat4_cortical_ripples')
 close all
+%% Generate table with counts and stores it.
+
+fields = fieldnames(All_str)
+Counts=[];
+for field_id=1:numel(fields)
+    si=All_str.(fields{field_id});
+    [sa_mixed,si_mixed,th]=freq_specs(si,fn);
+    close all
+    Counts(field_id,:)=[length(si_mixed.g1) length(si_mixed.g2) length(sa_mixed.g1) length(sa_mixed.g2)];
+end
+
+T=table;
+T.Variables=    [fields num2cell(Counts)];
+T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};];    
+
+cd(ratpath)
+writetable(T,strcat('Rat4_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
 
 %% THIS IS THE END OF THE DETECTION
 %The NEXT PART IS FOR PLOTTING PURPOSES.
