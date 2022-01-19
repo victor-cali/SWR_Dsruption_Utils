@@ -6,14 +6,14 @@
 % addpath(genpath('C:\Users\students\Documents\Swatantra\CorticoHippocampal'))
 
 % Path with the rat's data.
-ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4';
+ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat6';
 %Load RGS14 github
 addpath(genpath('/home/adrian/Downloads/LFP_RGS14'))
 addpath('/home/adrian/Desktop/SWR_Dsruption_Utils')
 
 ss=3;
 fn=1000;
-%Rat 5
+power_line_noise = 50 : 50 : 300;
 cd(ratpath)
 
 G=getfolder();
@@ -37,14 +37,14 @@ prepost=getfolder();
     HPC=load(HPC);
     HPC=getfield(HPC,'HPC_ripple');
     HPC=HPC.*(0.195);
-
+    HPC = notch_filter2(HPC, fn, power_line_noise);
 
     Cortex=dir(strcat('*','PFC','*.mat'));
     Cortex=Cortex.name;
     Cortex=load(Cortex);
     Cortex=getfield(Cortex,'PFC');
     Cortex=Cortex.*(0.195);
-
+    Cortex = notch_filter2(Cortex, fn, power_line_noise);
 
     %Load sleep scoring
     A = dir('*states*.mat');
@@ -67,7 +67,10 @@ prepost=getfolder();
     TOT{i} = abs(co_pfc) + abs(co_hpc); % Sum of amplitudes ==> To visually assess artifacts, as they will appear in every channel and add up
     
     end
- 
+ if length(prepost)==1 %If there is only one session.
+     Sd_Swr.sd5_hpc_co(j,i+1)=NaN;
+     Sd_Swr.sd5_pfc_co(j,i+1)=NaN;
+ end
 % L = length([TOT{1}.' TOT{2}.']);
 % close all
 % allscreen()
@@ -79,8 +82,8 @@ prepost=getfolder();
 artifact_th(j)=10*(std([TOT{1}.' TOT{2}.']))+mean([TOT{1}.' TOT{2}.'])
 
 end
-thresholds_perday_hpc=mean(Sd_Swr.sd5_hpc_co,2);
-thresholds_perday_cortex=mean(Sd_Swr.sd5_pfc_co,2);
+thresholds_perday_hpc=nanmean(Sd_Swr.sd5_hpc_co,2);
+thresholds_perday_cortex=nanmean(Sd_Swr.sd5_pfc_co,2);
 
 tr(1)=mean(thresholds_perday_hpc);
 tr(2)=mean(thresholds_perday_cortex);
@@ -90,7 +93,7 @@ offset2={'0'};
 
 D1 = round(tr(1) + str2num(cell2mat(offset1)));
 D2 = round(tr(2) + str2num(cell2mat(offset2)));
-xo
+
 %% Detect and store all events.
 
 All_events=[];
@@ -114,14 +117,14 @@ prepost=getfolder();
     HPC=load(HPC);
     HPC=getfield(HPC,'HPC_ripple');
     HPC=HPC.*(0.195);
-
+    HPC = notch_filter2(HPC, fn, power_line_noise);
 
     Cortex=dir(strcat('*','PFC','*.mat'));
     Cortex=Cortex.name;
     Cortex=load(Cortex);
     Cortex=getfield(Cortex,'PFC');
     Cortex=Cortex.*(0.195);
-
+    Cortex = notch_filter2(Cortex, fn, power_line_noise);
 
     %Load sleep scoring
     A = dir('*states*.mat');
@@ -157,14 +160,7 @@ end
 
      end
 end
-xo
-%%
-si=[All_events]; %take all events.
 
-[sa_mixed,si_mixed,th]=freq_specs(si,fn);
-
-printing_image('Rat4_cortical_ripples')
-close all
 %% Generate table with counts and stores it.
 
 fields = fieldnames(All_str)
@@ -181,7 +177,17 @@ T.Variables=    [fields num2cell(Counts)];
 T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};];    
 
 cd(ratpath)
-writetable(T,strcat('Rat4_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
+writetable(T,strcat('Rat6_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
+save('Rat6_All_events.mat','All_events')
+
+%% Plot distribution with all events and store thresholds.
+si=[All_events]; %take all events.
+
+[sa_mixed,si_mixed,th]=freq_specs(si,fn);
+
+printing_image('Rat6_cortical_ripples')
+close all
+save('Rat6_TH.mat','th')
 
 %% THIS IS THE END OF THE DETECTION
 %The NEXT PART IS FOR PLOTTING PURPOSES.
