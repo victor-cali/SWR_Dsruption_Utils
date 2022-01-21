@@ -93,7 +93,7 @@ offset2={'0'};
 
 D1 = round(tr(1) + str2num(cell2mat(offset1)));
 D2 = round(tr(2) + str2num(cell2mat(offset2)));
-xo
+
 %% Detect and store all events.
 
 All_events=[];
@@ -162,7 +162,7 @@ end
 
      end
 end
-xo
+
 %% Generate table with counts and stores it.
 
 fields = fieldnames(All_str)
