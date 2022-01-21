@@ -93,7 +93,7 @@ offset2={'0'};
 
 D1 = round(tr(1) + str2num(cell2mat(offset1)));
 D2 = round(tr(2) + str2num(cell2mat(offset2)));
-
+xo
 %% Detect and store all events.
 
 All_events=[];
@@ -139,9 +139,11 @@ prepost=getfolder();
 HPC_backup=HPC; %This is just for visualizing artifacts
 Cortex_backup=Cortex;    
 % Artifact removal
-[HPC,Cortex]=remove_artifacts(HPC,Cortex,fn,artifact_th(j));
+[HPC,Cortex,HPC_filtered,PFC_filtered]=remove_artifacts(HPC,Cortex,fn,artifact_th(j));
 
-[swr_hpc,swr_pfc,s_hpc,s_pfc,V_hpc,V_pfc,signal2_hpc,signal2_pfc,~,sig_cortex] = swr_check_thr(HPC,Cortex,states,ss,D1,D2,fn);
+% [swr_hpc,swr_pfc,s_hpc,s_pfc,V_hpc,V_pfc,signal2_hpc,signal2_pfc,~,sig_cortex] = swr_check_thr(HPC,Cortex,states,ss,D1,D2,fn);
+[swr_hpc,swr_pfc,s_hpc,s_pfc,V_hpc,V_pfc,signal2_hpc,signal2_pfc,~,sig_cortex] = detect_ripples(HPC_filtered,PFC_filtered,states,ss,D1,D2,fn);
+
 
 ['Found ' num2str(sum(s_hpc)) ' hippocampal ripples']
 ['Found ' num2str(sum(s_pfc)) ' cortical ripples']
@@ -160,7 +162,7 @@ end
 
      end
 end
-
+xo
 %% Generate table with counts and stores it.
 
 fields = fieldnames(All_str)
@@ -175,26 +177,26 @@ end
 T=table;
 T.Variables=    [fields num2cell(Counts)];
 T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};];    
-
+xo
 cd(ratpath)
-writetable(T,strcat('Rat6_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
-save('Rat6_All_events.mat','All_events')
+writetable(T,strcat('Rat4_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
+save('Rat4_All_events.mat','All_events')
 
 %% Plot distribution with all events and store thresholds.
 si=[All_events]; %take all events.
 
 [sa_mixed,si_mixed,th]=freq_specs(si,fn);
 
-printing_image('Rat6_cortical_ripples')
+printing_image('Rat4_cortical_ripples')
 close all
-save('Rat6_TH.mat','th')
+save('Rat4_TH.mat','th')
 
 %% THIS IS THE END OF THE DETECTION
 %The NEXT PART IS FOR PLOTTING PURPOSES.
     
 
 %% Find epoch with most detections
-max_length=cellfun(@length,swr_hpc(:,1));
+max_length=cellfun(@length,swr_pfc(:,1));
 N=max_length==max(max_length);
 
 
@@ -216,6 +218,7 @@ answer = inputdlg(prompt,dlgtitle,dims,definput);
  win_len=str2num(answer{1});
  BR=answer{2};
  %%
+
 close all
 plot((1:length(hpc))./1000,5.*zscore(hpc)+100,'Color','black')
 hold on
