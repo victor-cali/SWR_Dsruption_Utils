@@ -6,7 +6,7 @@
 % addpath(genpath('C:\Users\students\Documents\Swatantra\CorticoHippocampal'))
 
 % Path with the rat's data.
-ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat6';
+ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4';
 %Load RGS14 github
 addpath(genpath('/home/adrian/Downloads/LFP_RGS14'))
 addpath('/home/adrian/Desktop/SWR_Dsruption_Utils')
@@ -93,17 +93,28 @@ offset2={'0'};
 
 D1 = round(tr(1) + str2num(cell2mat(offset1)));
 D2 = round(tr(2) + str2num(cell2mat(offset2)));
-xo
+%xo
 %% Detect and store all events.
 
 All_events=[];
 All_str=[];
+All_str_hpc=[];
+All_str_random_g1=[];
+All_str_random_g2=[];
+All_str_cooccur_g1=[];
+All_str_cooccur_g2=[];
+
+Dist_g1=[];
+Dist_g2=[];
+
 for j=1:length(G) % Iterate across study days.
+% for j=1:1 % Iterate across study days.
 cd(ratpath)
 cd(G{j})
 
 prepost=getfolder();
      for i=1: length(prepost)
+%      for i=2: 2
 
     cd(ratpath)
     cd(G{j})
@@ -141,28 +152,140 @@ Cortex_backup=Cortex;
 % Artifact removal
 [HPC,Cortex,HPC_filtered,PFC_filtered]=remove_artifacts(HPC,Cortex,fn,artifact_th(j));
 
-[~,~,~,~,V_hpc,V_pfc,~,~,~,~] = swr_check_thr(HPC,Cortex,states,ss,D1,D2,fn);
-[swr_hpc,swr_pfc,s_hpc,s_pfc,~,~,signal2_hpc,signal2_pfc,~,sig_cortex] = detect_ripples(HPC_filtered,PFC_filtered,states,ss,D1,D2,fn);
+[~,~,~,~,V_hpc,V_pfc,~,~,~,~] = swr_check_thr(HPC_backup,Cortex_backup,states,ss,D1,D2,fn);
+[swr_hpc,swr_pfc,s_hpc,s_pfc,~,~,signal2_hpc,signal2_pfc,~,sig_cortex,Mr] = detect_ripples(HPC_filtered,PFC_filtered,states,ss,D1,D2,fn);
 
 
 ['Found ' num2str(sum(s_hpc)) ' hippocampal ripples']
 ['Found ' num2str(sum(s_pfc)) ' cortical ripples']
 
+%Event peaks
+Mx_cortex=swr_pfc(:,3);
+Mx_hpc=swr_hpc(:,3);
 
-%Get waveforms of cortical ripples and store them
+%% Get waveforms of cortical ripples and store them
 waveforms=sig_cortex(~cellfun('isempty',sig_cortex));
 waveforms=[waveforms{:}];
 All_events=[All_events waveforms];
 
-if i==1
-    All_str.([G{j} '_presleep' ])=waveforms;   
-else
-    All_str.([G{j} '_post' ])=waveforms;       
+%%
+[sa_mixed,si_mixed,th]=freq_specs(waveforms,fn);
+close all
+%% Random slow and fast Mx peak timestamps
+
+for r=1:length(fieldnames(Mr)) %500 shuffles
+    Mx_cortex_g1=Mr.(['Field_' num2str(r)]);
+    Mx_cortex_g2=Mr.(['Field_' num2str(r)]);
+
+    row=si_mixed.i1;
+    cont=0;
+    for ll=1:length(Mx_cortex)
+
+        if ~isempty(Mx_cortex{ll})
+
+            for lll=1:length(Mx_cortex{ll})
+                cont=cont+1;
+ 
+                if ~ismember(cont,row)
+                    Mx_cortex_g1{ll}(lll)=NaN;
+                else
+                    Mx_cortex_g2{ll}(lll)=NaN;
+                end
+
+            end
+             Mx_cortex_g1{ll}=Mx_cortex_g1{ll}(~isnan(Mx_cortex_g1{ll}));
+             Mx_cortex_g2{ll}=Mx_cortex_g2{ll}(~isnan(Mx_cortex_g2{ll}));
+
+        end
+
+    end
+    Mr_g1.(['Field_' num2str(r)])=Mx_cortex_g1;
+    Mr_g2.(['Field_' num2str(r)])=Mx_cortex_g2;
+    
 end
 
+
+for r=1:length(fieldnames(Mr))
+    [dum_cohfos1_g1,~]=cellfun(@(equis1,equis2) co_hfo(equis1,equis2),Mx_hpc,Mr_g1.(['Field_' num2str(r)]),'UniformOutput',false);
+    random_cohfos_count_g1(r)=sum(cellfun('length',dum_cohfos1_g1));
+
+    [dum_cohfos1_g2,~]=cellfun(@(equis1,equis2) co_hfo(equis1,equis2),Mx_hpc,Mr_g2.(['Field_' num2str(r)]),'UniformOutput',false);
+    random_cohfos_count_g2(r)=sum(cellfun('length',dum_cohfos1_g2));
+end
+
+
+%% Slow and fast hfos
+Mx_cortex_g1=Mx_cortex;
+Mx_cortex_g2=Mx_cortex;
+
+row=si_mixed.i1;
+cont=0;
+for ll=1:length(Mx_cortex)
+
+    if ~isempty(Mx_cortex{ll})
+
+        for lll=1:length(Mx_cortex{ll})
+            cont=cont+1;
+
+            if ~ismember(cont,row)
+                Mx_cortex_g1{ll}(lll)=NaN;
+            else
+                Mx_cortex_g2{ll}(lll)=NaN;
+            end
+
+        end
+         Mx_cortex_g1{ll}=Mx_cortex_g1{ll}(~isnan(Mx_cortex_g1{ll}));
+         Mx_cortex_g2{ll}=Mx_cortex_g2{ll}(~isnan(Mx_cortex_g2{ll}));
+
+    end
+
+end
+
+
+%% Coocurrent events (g1:slow, g2: fast)
+% 
+[cohfos1_g1,cohfos2_g1]=cellfun(@(equis1,equis2) co_hfo(equis1,equis2),Mx_hpc,Mx_cortex_g1,'UniformOutput',false);
+[cohfos1_g2,cohfos2_g2]=cellfun(@(equis1,equis2) co_hfo(equis1,equis2),Mx_hpc,Mx_cortex_g2,'UniformOutput',false);
+
+cohfos_count_g1=sum(cellfun('length',cohfos1_g1));
+cohfos_count_g2=sum(cellfun('length',cohfos1_g2));
+
+%% NORMALIZATION of distributions (Z-SCORE-LIKE)
+
+dist_g1=random_cohfos_count_g1-cohfos_count_g1.';
+dist_g1=dist_g1./std(random_cohfos_count_g1.').';
+
+dist_g2=random_cohfos_count_g2-cohfos_count_g2.';
+dist_g2=dist_g2./std(random_cohfos_count_g2.').';
+%% Store all we need in structures
+if i==1
+    All_str.([G{j} '_presleep' ])=waveforms;
+    All_str_hpc.([G{j} '_presleep' ])=sum(s_hpc);
+    All_str_random_g1.([G{j} '_presleep' ])=random_cohfos_count_g1;
+    All_str_random_g2.([G{j} '_presleep' ])=random_cohfos_count_g2;
+    All_str_cooccur_g1.([G{j} '_presleep' ])=cohfos_count_g1;
+    All_str_cooccur_g2.([G{j} '_presleep' ])=cohfos_count_g2;    
+    
+else
+    All_str.([G{j} '_post' ])=waveforms;
+    All_str_hpc.([G{j} '_post' ])=sum(s_hpc); 
+    All_str_random_g1.([G{j} '_post' ])=random_cohfos_count_g1;  
+    All_str_random_g2.([G{j} '_post' ])=random_cohfos_count_g2; 
+    All_str_cooccur_g1.([G{j} '_post' ])=cohfos_count_g1;
+    All_str_cooccur_g2.([G{j} '_post' ])=cohfos_count_g2;    
+end
+
+%Accumulate z-scored values for faster plotting later on.
+Dist_g1=[Dist_g1 dist_g1];
+Dist_g2=[Dist_g2 dist_g2];
+%xo
+%%
      end
 end
-xo
+
+cd(ratpath)
+save('Rat4_results.mat','All_str','All_str_hpc','All_str_random_g1','All_str_random_g2','All_str_cooccur_g1','All_str_cooccur_g2','Dist_g1','Dist_g2','All_events')
+
 %% Generate table with counts and stores it.
 
 fields = fieldnames(All_str)
@@ -179,17 +302,16 @@ T.Variables=    [fields num2cell(Counts)];
 T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};];    
 xo
 cd(ratpath)
-writetable(T,strcat('Rat6_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
-save('Rat6_All_events.mat','All_events')
+writetable(T,strcat('Rat4_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
 
 %% Plot distribution with all events and store thresholds.
 si=[All_events]; %take all events.
 
 [sa_mixed,si_mixed,th]=freq_specs(si,fn);
 
-printing_image('Rat6_cortical_ripples')
+printing_image('Rat4_cortical_ripples')
 close all
-save('Rat6_TH.mat','th')
+save('Rat4_TH.mat','th')
 
 %% THIS IS THE END OF THE DETECTION
 %The NEXT PART IS FOR PLOTTING PURPOSES.
