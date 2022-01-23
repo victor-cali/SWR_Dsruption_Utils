@@ -1,4 +1,4 @@
-function [swr_hpc,swr_pfc,s_hpc,s_pfc,V_hpc,V_pfc,signal2_hpc,signal2_pfc,sd_swr,sig]=detect_ripples(HPC,PFC,states,ss,D1,D2,fn)
+function [swr_hpc,swr_pfc,s_hpc,s_pfc,V_hpc,V_pfc,signal2_hpc,signal2_pfc,sd_swr,sig,Mr]=detect_ripples(HPC,PFC,states,ss,D1,D2,fn)
  
 %Ignore NaNs
 if sum(isnan(HPC))~=0 || sum(isnan(PFC))~=0
@@ -89,7 +89,12 @@ k=1;
 %         sig{l}=getsignal(Sx_pfc,Ex_pfc,ti,V_pfc,l);
     end
     sig=sig.';
-    
+%% Generate 500 shuffled timestamps of the events detected.
+for r=1:500
+    ti_rand=cellfun(@(x) x(randperm(size(x, 1))),ti,'UniformOutput',false);
+    Mr.(['Field_' num2str(r)])=cellfun(@(x1,x2,x3) x3(find(sum(x1==x2,2))).', ti,Mx_pfc,ti_rand,'UniformOutput',false );
+    r
+end    
 %% SD analysis
 %Two approaches
 %1) Concatenated epochs:
