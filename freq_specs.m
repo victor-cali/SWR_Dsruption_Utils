@@ -9,7 +9,7 @@ function [si_mixed,sa_mixed,TH]=freq_specs(si,fn)
 %         th=gaussmix(x,Rat,tr);
         [th]=gaussmix_slow_fast(x);
         TH(1)=th;
-        th=155;
+        th=167;
         sa_mixed.g1=si(x<=th);
         sa_mixed.i1=find(x<=th);
         sa_mixed.g2=si(x>th);
@@ -102,7 +102,7 @@ function [si_mixed,sa_mixed,TH]=freq_specs(si,fn)
 % %        th=gaussmix(yfreqmax,Rat,tr);
 %          [th]=gaussmix_slow_fast(yfreqmax);
 %                  TH(5)=th;
-%                  th=155;
+%                  th=188;
 %         spsqrt_mixed.g1=si(yfreqmax<=th);
 %         spsqrt_mixed.i1=find(yfreqmax<=th);
 %         spsqrt_mixed.g2=si(yfreqmax>th);
