@@ -146,14 +146,14 @@ function [si_mixed,sa_mixed,TH]=freq_specs(si,fn)
         l=NaN;
         p=NaN;
         th=NaN;
-        si_mixed.g1=NaN;
-        si_mixed.i1=NaN;
-        si_mixed.g2=NaN;
-        si_mixed.i2=NaN;
-        sa_mixed.g1=NaN;
-        sa_mixed.i1=NaN;
-        sa_mixed.g2=NaN;
-        sa_mixed.i2=NaN;
+        si_mixed.g1=[];
+        si_mixed.i1=[];
+        si_mixed.g2=[];
+        si_mixed.i2=[];
+        sa_mixed.g1=[];
+        sa_mixed.i1=[];
+        sa_mixed.g2=[];
+        sa_mixed.i2=[];
         
         TH=NaN;
     end
