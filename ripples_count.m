@@ -6,7 +6,7 @@
 % addpath(genpath('C:\Users\students\Documents\Swatantra\CorticoHippocampal'))
 
 % Path with the rat's data.
-ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat4';
+ratpath='/mnt/genzel/Rat/SWRDisruptionPlusMaze/plusmaze_toilet_data_correct/rat6';
 %Load RGS14 github
 addpath(genpath('/home/adrian/Downloads/LFP_RGS14'))
 addpath('/home/adrian/Desktop/SWR_Dsruption_Utils')
@@ -152,6 +152,11 @@ Cortex_backup=Cortex;
 % Artifact removal
 [HPC,Cortex,HPC_filtered,PFC_filtered]=remove_artifacts(HPC,Cortex,fn,artifact_th(j));
 
+if ~ismember(states,ss)
+    'No NREM, skipping this day.'
+    continue
+end
+
 [~,~,~,~,V_hpc,V_pfc,~,~,~,~] = swr_check_thr(HPC_backup,Cortex_backup,states,ss,D1,D2,fn);
 [swr_hpc,swr_pfc,s_hpc,s_pfc,~,~,signal2_hpc,signal2_pfc,~,sig_cortex,Mr] = detect_ripples(HPC_filtered,PFC_filtered,states,ss,D1,D2,fn);
 
@@ -282,7 +287,7 @@ Dist_g2=[Dist_g2 dist_g2];
 %%
      end
 end
-
+xo
 cd(ratpath)
 save('Rat4_results.mat','All_str','All_str_hpc','All_str_random_g1','All_str_random_g2','All_str_cooccur_g1','All_str_cooccur_g2','Dist_g1','Dist_g2','All_events')
 
@@ -295,11 +300,14 @@ for field_id=1:numel(fields)
     [sa_mixed,si_mixed,th]=freq_specs(si,fn);
     close all
     Counts(field_id,:)=[length(si_mixed.g1) length(si_mixed.g2) length(sa_mixed.g1) length(sa_mixed.g2)];
+    Counts_hpc(field_id,:)=All_str_hpc.(fields{field_id});
+    Counts_cooccur_g1(field_id,:)=All_str_cooccur_g1.(fields{field_id});
+    Counts_cooccur_g2(field_id,:)=All_str_cooccur_g2.(fields{field_id});    
 end
 
 T=table;
-T.Variables=    [fields num2cell(Counts)];
-T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};];    
+T.Variables=    [fields num2cell([Counts Counts_hpc Counts_cooccur_g1 Counts_cooccur_g2 ])];
+T.Properties.VariableNames=[{'Trial'};{'Instant Slow'};{'Instant Fast'};{'Meanfreq Slow'};{'Meanfreq Fast'};{'HPC ripples'} ;{'Co-occur Slow inst.'};{'Co-occur Fast inst'}];    
 xo
 cd(ratpath)
 writetable(T,strcat('Rat4_slow_fast_counts.xls'),'Sheet',1,'Range','A2:Z50')  
